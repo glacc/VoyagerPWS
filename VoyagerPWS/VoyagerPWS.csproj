@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\sfml-ui\Glacc.UI\Glacc.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="MiSans-Regular.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
