@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "VoyagerPWS": {
+      "commandName": "Project",
+      "commandLineArgs": "\"E:\\Documents\\Voyager PWS Data\""
+    }
+  }
+}
