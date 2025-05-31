@@ -1,0 +1,3 @@
+[submodule "sfml-ui"]
+	path = sfml-ui
+	url = https://github.com/glacc/sfml-ui.git
