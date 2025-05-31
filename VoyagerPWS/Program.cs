@@ -112,7 +112,7 @@ namespace VoyagerPWS
             if (lblFileLoadInfo != null)
                 lblFileLoadInfo.text = $"Loading \"{fileSelector.lastSelectedFilePath}\" ...";
 
-            TryLoadPWSData(fileSelector.lastSelectedFilePath);
+            LoadPWSData(fileSelector.lastSelectedFilePath);
         }
 
         #endregion
@@ -121,6 +121,11 @@ namespace VoyagerPWS
 
         const int sampleRate = 28800;
         const int samplePerLine = 1600;
+
+        const int maxFrequency = 12000;
+
+        const int fftSize = 2048;
+        const int fftOutputSize = (fftSize / 2) * maxFrequency / (sampleRate / 2);
 
         static TimeSpan recordStartTime;
 
@@ -190,11 +195,8 @@ namespace VoyagerPWS
         static void FFTRow(in byte[] buffer, out float[] output)
         {
             const int bufferLength = samplePerLine;
-            const int outputSize = 800;
 
-            const int fftSize = 2048;
-
-            output = new float[outputSize];
+            output = new float[fftOutputSize];
 
             if (buffer.Length != bufferLength)
                 return;
@@ -211,20 +213,6 @@ namespace VoyagerPWS
             const float scale = 1.0f / fftSize;
             for (int i = 0; i < output.Length; i++)
                 output[i] = (float)complexesFft[i].Magnitude * scale;
-
-            /*
-            float maxMagnitude = 0.0f;
-            for (int i = 0; i < output.Length; i++)
-            {
-                float magnitude = (float)complexesFft[i].Magnitude;
-                if (magnitude > maxMagnitude)
-                    maxMagnitude = magnitude;
-                output[i] = magnitude;
-            }
-
-            for (int i = 0; i < output.Length; i++)
-                output[i] /= maxMagnitude;
-            */
         }
 
         static (byte r8, byte g8, byte b8) MagnitudeToColor(float value)
@@ -363,12 +351,7 @@ namespace VoyagerPWS
 
             fftChartFreqAxisText.Clear();
 
-            const int fftSize = 2048;
-            const int fftOutputSize = 800;
-
             const int freqSpacing = 2000;
-
-            const int maxFrequency = (int)((sampleRate / 2) * ((float)fftOutputSize / (fftSize / 2.0f)));
 
             int freq = 0;
             int index = 0;
@@ -424,6 +407,7 @@ namespace VoyagerPWS
 
             fftChartTexture?.Dispose();
             fftChartTexture = new Texture((uint)textureWidth, (uint)textureHeight);
+            // fftChartTexture.Smooth = true;
             fftChart?.Dispose();
             fftChart = new Sprite(fftChartTexture);
 
@@ -454,18 +438,6 @@ namespace VoyagerPWS
                 while (y < fftRowData.Length)
                 {
                     float currentValue = fftRowData[y];
-
-                    /*
-                    const float maxValue = 15.0f;
-                    
-                    float brightness = MathF.Pow(MathF.Max(0.0f, MathF.Min((currentValue / maxValue), 1.0f)), 1.5f) * 255.0f;
-                    byte brightnessByte = (byte)brightness;
-
-                    pixels[pixelOffset++] = brightnessByte;
-                    pixels[pixelOffset++] = brightnessByte;
-                    pixels[pixelOffset++] = brightnessByte;
-                    pixels[pixelOffset++] = 0xFF;
-                    */
 
                     byte r, g, b;
                     (r, g, b) = MagnitudeToColor(MathF.Pow(currentValue, 2.0f));
@@ -498,12 +470,12 @@ namespace VoyagerPWS
             UpdateAxisText();
         }
 
-        static bool TryLoadPWSData(string? path)
+        static bool LoadPWSData(string? path)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
                 if (lblFileLoadInfo != null)
-                    lblFileLoadInfo.text = "Cannot load Voyager PWS data. Path is empty or null.";
+                    lblFileLoadInfo.text = "Path is empty or null.";
 
                 return false;
             }
@@ -521,10 +493,11 @@ namespace VoyagerPWS
                 return false;
             }
 
-            if (pwsDataFileStream.Length > (4 << (10 * 2)))
+            const long sizeLimit = (1 << (10 * 2));
+            if (pwsDataFileStream.Length > sizeLimit)
             {
                 if (lblFileLoadInfo != null)
-                    lblFileLoadInfo.text = $"File too large. ({pwsDataFileStream.Length} bytes)";
+                    lblFileLoadInfo.text = $"File too large. ({pwsDataFileStream.Length} bytes / {sizeLimit} bytes)";
 
                 pwsDataFileStream.Close();
 
