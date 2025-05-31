@@ -409,7 +409,12 @@ namespace VoyagerPWS
             fftChart?.Dispose();
 
             if (textureWidth > 8000 || textureHeight > 8000)
+            {
+                fftChartTexture = null;
+                fftChart = null;
+
                 return;
+            }
 
             fftChartTexture = new Texture((uint)textureWidth, (uint)textureHeight);
             // fftChartTexture.Smooth = true;
