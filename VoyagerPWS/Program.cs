@@ -406,9 +406,13 @@ namespace VoyagerPWS
             int textureSize = textureWidth * textureHeight * 4;
 
             fftChartTexture?.Dispose();
+            fftChart?.Dispose();
+
+            if (textureWidth > 8000 || textureHeight > 8000)
+                return;
+
             fftChartTexture = new Texture((uint)textureWidth, (uint)textureHeight);
             // fftChartTexture.Smooth = true;
-            fftChart?.Dispose();
             fftChart = new Sprite(fftChartTexture);
 
             scopeScaledWidth = slicedMode ? scopeWidthSliced : scopeWidthNonSliced;
